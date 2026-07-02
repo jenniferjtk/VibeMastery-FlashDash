@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 /// Level-select entry point. Card grid is added in a follow-up commit.
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
-
+//add bright colors for high contrast 
   @override
   Widget build(BuildContext context) {
     return const Scaffold(
