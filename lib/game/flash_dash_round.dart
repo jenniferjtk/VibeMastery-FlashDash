@@ -1,14 +1,17 @@
 import 'dart:math';
 
+import '../models/score_entry.dart';
+
 /// Pure state machine for one round of Flash Dash.
 ///
 /// Holds the recycling word queue: a word marked "practice again" goes to
 /// the back of the queue instead of being removed, and only counts toward
 /// [wordsKnownFirstTry] if it is marked "know it" before it is ever
 /// recycled. The round is complete once every word has been known at
-/// least once. Timing and scoring live in separate, smaller pieces added
-/// on top of this class.
+/// least once. Timing lives in a separate piece added on top of this class.
 class FlashDashRound {
+  static const String gameId = 'flash_dash';
+
   final String level;
   final List<String> words;
 
@@ -58,5 +61,27 @@ class FlashDashRound {
       throw StateError('No current word: the round is already complete.');
     }
     return word;
+  }
+
+  /// roundScore = round(100 * wordsKnownFirstTry / wordsTotal).
+  ///
+  /// Words known only after one or more recycles still count toward
+  /// completion but pull the score down versus a first-try knowledge,
+  /// since they still needed practice.
+  int computeRoundScore() {
+    if (wordsTotal == 0) return 0;
+    return (100 * _wordsKnownFirstTry / wordsTotal).round();
+  }
+
+  /// Converts the round's outcome into a persistable [ScoreEntry].
+  ScoreEntry toScoreEntry({DateTime? playedAt}) {
+    return ScoreEntry(
+      gameId: gameId,
+      level: level,
+      playedAt: playedAt ?? DateTime.now(),
+      roundScore: computeRoundScore(),
+      wordsTotal: wordsTotal,
+      wordsKnownFirstTry: wordsKnownFirstTry,
+    );
   }
 }
