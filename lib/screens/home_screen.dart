@@ -6,7 +6,8 @@ import 'flash_dash_screen.dart';
 
 /// Level-select entry point: one big color-coded, icon-led card per
 /// Dolch level. Tapping a card goes straight into Flash Dash for that
-/// level — no instructional text to read first.
+/// level no instructional text to read first.
+/// 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
 
@@ -16,6 +17,7 @@ class HomeScreen extends StatelessWidget {
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(16),
+          // GridView of LevelCards
           child: GridView.builder(
             gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
               maxCrossAxisExtent: 220,
