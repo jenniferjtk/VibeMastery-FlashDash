@@ -118,4 +118,18 @@ void main() {
     expect(resultsScreen.round.wordsKnownFirstTry, 3);
     expect(resultsScreen.round.computeRoundScore(), 100);
   });
+
+  testWidgets('an empty word list shows a friendly fallback instead of crashing', (WidgetTester tester) async {
+    const emptyLevel = DolchLevel(id: 'empty_level', label: 'Empty Level', words: []);
+
+    await tester.pumpWidget(const MaterialApp(home: FlashDashScreen(level: emptyLevel)));
+    await tester.pumpAndSettle();
+
+    expect(tester.takeException(), isNull);
+    expect(find.byType(WordCard), findsNothing);
+    expect(find.byIcon(Icons.check_circle_rounded), findsNothing);
+    expect(find.byIcon(Icons.cancel_rounded), findsNothing);
+    // The fallback offers a way back home instead of soft-locking.
+    expect(find.byIcon(Icons.home_rounded), findsOneWidget);
+  });
 }

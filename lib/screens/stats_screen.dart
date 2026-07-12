@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../models/score_entry.dart';
 import '../services/score_repository.dart';
 import '../theme/app_theme.dart';
+import '../utils/navigation_guard.dart';
 import '../widgets/score_visual.dart';
 
 const Map<String, String> _gameDisplayNames = {
@@ -47,7 +48,13 @@ class _StatsScreenState extends State<StatsScreen> {
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.home_rounded, size: 32),
-          onPressed: () => Navigator.of(context).pop(),
+          constraints: const BoxConstraints(minWidth: 64, minHeight: 64),
+          onPressed: () {
+            if (!isRouteCurrent(context)) return;
+            if (Navigator.of(context).canPop()) {
+              Navigator.of(context).pop();
+            }
+          },
         ),
       ),
       body: SafeArea(

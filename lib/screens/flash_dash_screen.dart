@@ -5,6 +5,7 @@ import '../data/dolch_words.dart';
 import '../game/flash_dash_round.dart';
 import '../game/round_timer.dart';
 import '../widgets/answer_button.dart';
+import '../widgets/go_home_button.dart';
 import '../widgets/level_card.dart';
 import '../widgets/round_timer_bar.dart';
 import '../widgets/word_card.dart';
@@ -18,6 +19,9 @@ import 'results_screen.dart';
 /// [RoundTimer]. The round ends — and input is disabled — the moment the
 /// queue empties or the timer runs out, and the player is taken to the
 /// [ResultsScreen] shortly after.
+///
+/// If [level] somehow has no words, no round/timer is started at all and
+/// a friendly fallback is shown instead of crashing.
 class FlashDashScreen extends StatefulWidget {
   final DolchLevel level;
   final Duration roundDuration;
@@ -36,9 +40,9 @@ class _FlashDashScreenState extends State<FlashDashScreen> with SingleTickerProv
   static const _transitionDuration = Duration(milliseconds: 220);
   static const _swipeVelocityThreshold = 300.0;
 
-  late final FlashDashRound _round;
-  late final RoundTimer _timer;
-  late final Ticker _ticker;
+  FlashDashRound? _round;
+  RoundTimer? _timer;
+  Ticker? _ticker;
   Duration _lastTick = Duration.zero;
 
   /// True while a card transition is in flight. Every input handler bails
@@ -51,35 +55,38 @@ class _FlashDashScreenState extends State<FlashDashScreen> with SingleTickerProv
   /// just ended.
   bool _hasFinished = false;
 
-  bool get _isRoundOver => _round.isComplete || _timer.isExpired;
+  bool get _isRoundOver => _round!.isComplete || _timer!.isExpired;
 
   @override
   void initState() {
     super.initState();
+    if (widget.level.words.isEmpty) return;
     _round = FlashDashRound(level: widget.level.label, words: widget.level.words);
     _timer = RoundTimer(roundDuration: widget.roundDuration);
     _ticker = createTicker(_onTick)..start();
   }
 
   void _onTick(Duration elapsed) {
-    if (_timer.isExpired) {
-      _ticker.stop();
+    final timer = _timer!;
+    final ticker = _ticker!;
+    if (timer.isExpired) {
+      ticker.stop();
       return;
     }
     final delta = elapsed - _lastTick;
     _lastTick = elapsed;
     setState(() {
-      _timer.elapse(delta);
+      timer.elapse(delta);
     });
-    if (_timer.isExpired) {
-      _ticker.stop();
+    if (timer.isExpired) {
+      ticker.stop();
       _navigateToResults();
     }
   }
 
   @override
   void dispose() {
-    _ticker.dispose();
+    _ticker?.dispose();
     super.dispose();
   }
 
@@ -88,9 +95,9 @@ class _FlashDashScreenState extends State<FlashDashScreen> with SingleTickerProv
     setState(() {
       _isTransitioning = true;
       if (known) {
-        _round.markKnown();
+        _round!.markKnown();
       } else {
-        _round.markPracticeAgain();
+        _round!.markPracticeAgain();
       }
     });
     if (_isRoundOver) {
@@ -108,11 +115,11 @@ class _FlashDashScreenState extends State<FlashDashScreen> with SingleTickerProv
   void _navigateToResults() {
     if (_hasFinished) return;
     _hasFinished = true;
-    _ticker.stop();
+    _ticker?.stop();
     Future.delayed(_transitionDuration, () {
       if (!mounted) return;
       Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (_) => ResultsScreen(round: _round)),
+        MaterialPageRoute(builder: (_) => ResultsScreen(round: _round!)),
       );
     });
   }
@@ -126,8 +133,13 @@ class _FlashDashScreenState extends State<FlashDashScreen> with SingleTickerProv
   @override
   Widget build(BuildContext context) {
     final visual = visualForLevel(widget.level.id);
+
+    if (widget.level.words.isEmpty) {
+      return _EmptyLevelFallback(visual: visual);
+    }
+
     final roundOver = _isRoundOver;
-    final word = roundOver ? null : _round.currentWord;
+    final word = roundOver ? null : _round!.currentWord;
 
     return Scaffold(
       backgroundColor: visual.color,
@@ -136,7 +148,7 @@ class _FlashDashScreenState extends State<FlashDashScreen> with SingleTickerProv
           children: [
             Padding(
               padding: const EdgeInsets.fromLTRB(24, 16, 24, 0),
-              child: RoundTimerBar(remainingFraction: _timer.remainingFraction),
+              child: RoundTimerBar(remainingFraction: _timer!.remainingFraction),
             ),
             Expanded(
               child: GestureDetector(
@@ -177,6 +189,35 @@ class _FlashDashScreenState extends State<FlashDashScreen> with SingleTickerProv
                 ),
               ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Shown instead of gameplay when a level's word list is somehow empty,
+/// so the app never crashes on a bad/missing data set.
+class _EmptyLevelFallback extends StatelessWidget {
+  final LevelVisual visual;
+
+  const _EmptyLevelFallback({required this.visual});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: visual.color,
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            children: [
+              const Spacer(),
+              Icon(visual.icon, size: 120, color: Colors.white),
+              const Spacer(),
+              const GoHomeButton(),
+              const SizedBox(height: 16),
+            ],
+          ),
         ),
       ),
     );

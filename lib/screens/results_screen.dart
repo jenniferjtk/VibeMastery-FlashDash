@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../game/flash_dash_round.dart';
 import '../services/score_repository.dart';
 import '../theme/app_theme.dart';
+import '../widgets/go_home_button.dart';
 import '../widgets/score_visual.dart';
 
 /// Results screen shown immediately after a round ends.
@@ -44,30 +45,10 @@ class _ResultsScreenState extends State<ResultsScreen> {
               const Spacer(),
               ScoreVisual(score: score),
               const Spacer(),
-              const _HomeButton(),
+              const GoHomeButton(),
               const SizedBox(height: 16),
             ],
           ),
-        ),
-      ),
-    );
-  }
-}
-
-class _HomeButton extends StatelessWidget {
-  const _HomeButton();
-
-  @override
-  Widget build(BuildContext context) {
-    return Material(
-      color: const Color(0xFF6C63FF),
-      borderRadius: BorderRadius.circular(24),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(24),
-        onTap: () => Navigator.of(context).popUntil((route) => route.isFirst),
-        child: const Padding(
-          padding: EdgeInsets.all(20),
-          child: Icon(Icons.home_rounded, size: 48, color: Colors.white),
         ),
       ),
     );

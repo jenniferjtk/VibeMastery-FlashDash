@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../data/dolch_words.dart';
+import '../utils/navigation_guard.dart';
 import '../widgets/level_card.dart';
 import 'flash_dash_screen.dart';
 import 'stats_screen.dart';
@@ -23,7 +24,9 @@ class HomeScreen extends StatelessWidget {
                 padding: const EdgeInsets.only(right: 8, top: 4),
                 child: IconButton(
                   icon: const Icon(Icons.bar_chart_rounded, size: 32),
+                  constraints: const BoxConstraints(minWidth: 64, minHeight: 64),
                   onPressed: () {
+                    if (!isRouteCurrent(context)) return;
                     Navigator.of(context).push(
                       MaterialPageRoute(builder: (_) => const StatsScreen()),
                     );
@@ -47,6 +50,7 @@ class HomeScreen extends StatelessWidget {
                     return LevelCard(
                       level: level,
                       onTap: () {
+                        if (!isRouteCurrent(context)) return;
                         Navigator.of(context).push(
                           MaterialPageRoute(builder: (_) => FlashDashScreen(level: level)),
                         );
