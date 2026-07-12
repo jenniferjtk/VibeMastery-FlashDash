@@ -8,6 +8,7 @@ import '../widgets/answer_button.dart';
 import '../widgets/level_card.dart';
 import '../widgets/round_timer_bar.dart';
 import '../widgets/word_card.dart';
+import 'results_screen.dart';
 
 /// Flash Dash gameplay screen.
 ///
@@ -15,8 +16,8 @@ import '../widgets/word_card.dart';
 /// a green check zone (know it) and red circle zone (practice again) plus
 /// matching swipe gestures, and a shrinking [RoundTimerBar] driven by a
 /// [RoundTimer]. The round ends — and input is disabled — the moment the
-/// queue empties or the timer runs out. Completion navigation is wired up
-/// in a follow-up commit.
+/// queue empties or the timer runs out, and the player is taken to the
+/// [ResultsScreen] shortly after.
 class FlashDashScreen extends StatefulWidget {
   final DolchLevel level;
   final Duration roundDuration;
@@ -45,6 +46,11 @@ class _FlashDashScreenState extends State<FlashDashScreen> with SingleTickerProv
   /// up more than one answer at a time.
   bool _isTransitioning = false;
 
+  /// Guards against navigating to Results more than once — both the tick
+  /// callback and the answer handler can independently notice the round
+  /// just ended.
+  bool _hasFinished = false;
+
   bool get _isRoundOver => _round.isComplete || _timer.isExpired;
 
   @override
@@ -67,6 +73,7 @@ class _FlashDashScreenState extends State<FlashDashScreen> with SingleTickerProv
     });
     if (_timer.isExpired) {
       _ticker.stop();
+      _navigateToResults();
     }
   }
 
@@ -86,9 +93,27 @@ class _FlashDashScreenState extends State<FlashDashScreen> with SingleTickerProv
         _round.markPracticeAgain();
       }
     });
+    if (_isRoundOver) {
+      _navigateToResults();
+      return;
+    }
     Future.delayed(_transitionDuration, () {
       if (!mounted) return;
       setState(() => _isTransitioning = false);
+    });
+  }
+
+  /// Pauses briefly (so the completion icon is visible for a beat) then
+  /// replaces this screen with the Results screen for the finished round.
+  void _navigateToResults() {
+    if (_hasFinished) return;
+    _hasFinished = true;
+    _ticker.stop();
+    Future.delayed(_transitionDuration, () {
+      if (!mounted) return;
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(builder: (_) => ResultsScreen(round: _round)),
+      );
     });
   }
 

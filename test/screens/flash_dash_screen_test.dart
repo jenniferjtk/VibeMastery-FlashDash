@@ -4,6 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:vibemastery/data/dolch_words.dart';
 import 'package:vibemastery/game/round_timer.dart';
 import 'package:vibemastery/screens/flash_dash_screen.dart';
+import 'package:vibemastery/screens/results_screen.dart';
 import 'package:vibemastery/widgets/word_card.dart';
 
 const _testLevel = DolchLevel(id: 'test_level', label: 'Test Level', words: ['dog', 'cat', 'sun']);
@@ -22,6 +23,15 @@ Future<void> _pumpScreen(
 /// settling.
 Future<void> _settleTransition(WidgetTester tester) async {
   for (var i = 0; i < 6; i++) {
+    await tester.pump(const Duration(milliseconds: 50));
+  }
+}
+
+/// Same idea as [_settleTransition] but longer, to also clear the
+/// completion pause plus the page-route push animation that follow a
+/// finished round.
+Future<void> _settleNavigation(WidgetTester tester) async {
+  for (var i = 0; i < 24; i++) {
     await tester.pump(const Duration(milliseconds: 50));
   }
 }
@@ -80,5 +90,32 @@ void main() {
     expect(find.byType(WordCard), findsNothing);
     expect(find.byIcon(Icons.check_circle_rounded), findsNothing);
     expect(find.byIcon(Icons.cancel_rounded), findsNothing);
+  });
+
+  testWidgets('timer expiry navigates to the Results screen', (WidgetTester tester) async {
+    await _pumpScreen(tester, roundDuration: const Duration(seconds: 2));
+
+    await tester.pump(const Duration(seconds: 3));
+    await _settleNavigation(tester);
+
+    expect(find.byType(FlashDashScreen), findsNothing);
+    expect(find.byType(ResultsScreen), findsOneWidget);
+  });
+
+  testWidgets('clearing every word navigates to the Results screen', (WidgetTester tester) async {
+    await _pumpScreen(tester);
+
+    final knowItButton = find.byIcon(Icons.check_circle_rounded);
+    for (var i = 0; i < 3; i++) {
+      await tester.tap(knowItButton);
+      await _settleTransition(tester);
+    }
+    await _settleNavigation(tester);
+
+    expect(find.byType(FlashDashScreen), findsNothing);
+    final resultsScreen = tester.widget<ResultsScreen>(find.byType(ResultsScreen));
+    expect(resultsScreen.round.wordsTotal, 3);
+    expect(resultsScreen.round.wordsKnownFirstTry, 3);
+    expect(resultsScreen.round.computeRoundScore(), 100);
   });
 }
