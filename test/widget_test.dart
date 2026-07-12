@@ -22,7 +22,12 @@ void main() {
     expect(find.byType(FlashDashScreen), findsNothing);
 
     await tester.tap(find.text('Pre-Primer'));
-    await tester.pumpAndSettle();
+    // FlashDashScreen's round timer ticks for the whole round duration, so
+    // pumpAndSettle would run out the clock instead of settling. A few
+    // fixed pumps are enough to clear the page transition animation.
+    for (var i = 0; i < 6; i++) {
+      await tester.pump(const Duration(milliseconds: 100));
+    }
 
     final flashDashScreen = tester.widget<FlashDashScreen>(find.byType(FlashDashScreen));
     expect(flashDashScreen.level.label, 'Pre-Primer');
