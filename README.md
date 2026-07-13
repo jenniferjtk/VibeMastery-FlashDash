@@ -21,7 +21,7 @@ Requires the Flutter SDK (this project targets Dart `^3.11.5`). No network conne
 
 ## Distinctness
 
-This app is distinct from my Solo 3 project and from my team project — it is a new, single-user offline sight-word practice app built from scratch for this exam.
+This app is distinct from my Solo 3 project and from my team project. it is a new, single-user offline sight-word practice app built from scratch for this exam.
 
 ## Tradeoffs
 
